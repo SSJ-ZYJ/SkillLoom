@@ -1,0 +1,37 @@
+# Local environments and dependencies
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Credentials and browser sessions
+.env
+.env.*
+!.env.example
+.agents/
+.codex/
+# Local CLI installations; source skills live in independent root directories
+/.*/skills/
+/skills-lock.json
+sessions/
+captures/
+traces/
+*.har
+*.pem
+*.key
+
+# Local output and editor files
+/.local-docs/
+dist/
+coverage/
+*.log
+*.bak
+*.tmp
+*.zip
+*.tgz
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

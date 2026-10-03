@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "path": "educoder-automation",
+      "summary": "在线实验任务自动化，涵盖编程、多文件与选择题，支持保存核验及评测跟踪。"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+name: 问题反馈
+description: 报告安装、执行或结果核验中的异常
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "请提供最小复现步骤及脱敏诊断信息。请勿上传 Cookie、访问令牌、原始请求或账号信息；安全漏洞请按 SECURITY.md 通过私密渠道报告。"
+  - type: input
+    id: skill
+    attributes:
+      label: 技能名称和版本
+      placeholder: educoder-automation；版本标签或提交标识
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 使用环境
+      description: 操作系统、客户端及版本、浏览器工具，以及相关的 Node.js 或 Python 版本
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 最小复现流程；注明是离线测试还是实际网站操作
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期结果与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 脱敏后的证据
+      description: 错误信息、输出结果或诊断记录；提交前移除身份信息和凭据

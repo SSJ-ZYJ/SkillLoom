@@ -1,0 +1,2 @@
+# Repository checks only. Installing a skill does not require this dependency.
+PyYAML==6.0.3
