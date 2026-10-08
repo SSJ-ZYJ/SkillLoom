@@ -5,6 +5,7 @@ node_modules/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 
 # Credentials and browser sessions
 .env
@@ -12,7 +13,7 @@ __pycache__/
 !.env.example
 .agents/
 .codex/
-# Local CLI installations; source skills live in independent root directories
+# Local CLI installations; source skills live under skills/
 /.*/skills/
 /skills-lock.json
 sessions/
@@ -32,6 +33,8 @@ coverage/
 *.zip
 *.tgz
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .DS_Store
 Thumbs.db

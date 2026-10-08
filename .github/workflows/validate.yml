@@ -13,6 +13,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  style:
+    name: Formatting and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - name: Install maintenance tools
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-dev.txt
+          bun install --frozen-lockfile
+      - name: Check formatting and lint
+        run: python scripts/style.py
+
   repository:
     name: Repository (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
@@ -37,6 +62,11 @@ jobs:
         run: python -m unittest discover -s tests -p "test_*.py"
       - name: Run all Python skill tests
         run: python scripts/test_skills.py
+      - name: Check minimum supported PyMuPDF
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.10'
+        run: |
+          python -m pip install --disable-pip-version-check PyMuPDF==1.24.5
+          python scripts/test_skills.py
 
   runtime:
     name: Runtime (${{ matrix.os }}, Node ${{ matrix.node }})

@@ -1,9 +1,9 @@
 """Run repository checks and all supported test suites from any working directory."""
 
-from pathlib import Path
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 
 def main() -> int:
@@ -14,8 +14,12 @@ def main() -> int:
         return 1
     node_tests = sorted(str(path) for path in (root / "tests").rglob("*.test.mjs"))
     checks = [
+        ("Formatting and lint", [sys.executable, str(root / "scripts/style.py")]),
         ("Repository validation", [sys.executable, str(root / "scripts/validate_repository.py")]),
-        ("Python repository tests", [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"]),
+        (
+            "Python repository tests",
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"],
+        ),
         ("Node repository tests", [node, "--test", *node_tests]),
         ("Node skill tests", [node, str(root / "scripts/test-skills.mjs")]),
         ("Python skill tests", [sys.executable, str(root / "scripts/test_skills.py")]),

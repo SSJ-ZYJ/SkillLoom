@@ -1,0 +1,14 @@
+{
+  "name": "skillloom-maintenance",
+  "private": true,
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "format": "python scripts/style.py --write",
+    "style:check": "python scripts/style.py",
+    "check": "python scripts/check.py"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "prettier": "3.9.9"
+  }
+}

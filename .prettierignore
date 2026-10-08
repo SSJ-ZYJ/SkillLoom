@@ -1,0 +1,19 @@
+# Biome owns JS and JSON; Ruff owns Python. Prettier owns Markdown and YAML only.
+**/*
+!**/
+!**/*.md
+!**/*.yml
+!**/*.yaml
+.git/
+node_modules/
+.venv/
+venv/
+.local-docs/
+/.*/skills/
+.agents/
+.codex/
+captures/
+sessions/
+traces/
+dist/
+coverage/
