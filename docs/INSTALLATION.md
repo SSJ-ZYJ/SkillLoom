@@ -1,6 +1,6 @@
 # 技能安装
 
-SkillLoom 以独立技能目录分发，目录内的 `SKILL.md` 提供技能元数据与执行指令，其他文件提供脚本、参考资料及资源。该结构遵循 [Agent Skills 开放格式](https://agentskills.io/home)，不依赖单一客户端的专用安装器。
+SkillLoom 的技能源码统一存放在 `skills/<技能名>/`，每个技能以独立目录分发。目录内的 `SKILL.md` 提供技能元数据与执行指令，其他文件提供脚本、参考资料及资源。该结构遵循 [Agent Skills 开放格式](https://agentskills.io/home)，不依赖单一客户端的专用安装器。
 
 ## 使用命令行安装
 
@@ -21,7 +21,7 @@ npx skills@latest add SSJ-ZYJ/SkillLoom --list
 npx skills@latest add SSJ-ZYJ/SkillLoom --skill educoder-automation
 ```
 
-安装器依据技能目录中的 `SKILL.md` 发现可用技能。
+安装器依据 `skills/` 下各技能目录的 `SKILL.md` 发现可用技能；`--skill` 仍使用技能名称，不加 `skills/` 前缀。
 
 ### 从本地仓库安装
 
@@ -42,14 +42,14 @@ npx skills@latest add .
 npx skills@latest add SSJ-ZYJ/SkillLoom --skill educoder-automation --agent codex claude-code --global
 ```
 
-| 参数 | 用途 |
-| --- | --- |
-| `--list` | 列出可用技能，不进行安装 |
-| `--skill <名称>` | 指定技能；未指定时可选择可用技能 |
-| `--agent <客户端标识>` | 指定一个或多个目标客户端，标识列表见 CLI 文档 |
-| `--global` | 使用用户级安装；默认使用项目级安装 |
-| `--copy` | 可选：为客户端安装独立文件副本，替代符号链接 |
-| `--yes` | 跳过确认提示，适用于目标技能、客户端与范围已明确的自动化安装 |
+| 参数                   | 用途                                                         |
+| ---------------------- | ------------------------------------------------------------ |
+| `--list`               | 列出可用技能，不进行安装                                     |
+| `--skill <名称>`       | 指定技能；未指定时可选择可用技能                             |
+| `--agent <客户端标识>` | 指定一个或多个目标客户端，标识列表见 CLI 文档                |
+| `--global`             | 使用用户级安装；默认使用项目级安装                           |
+| `--copy`               | 可选：为客户端安装独立文件副本，替代符号链接                 |
+| `--yes`                | 跳过确认提示，适用于目标技能、客户端与范围已明确的自动化安装 |
 
 安装器支持符号链接与文件复制两种方式。CLI 推荐符号链接，使多个客户端共享一份技能文件；需要独立副本或环境不支持符号链接时，可添加 `--copy`。该参数仅控制文件安装方式，与是否保留旧版本无关。实际目标路径以安装摘要为准。客户端未被自动识别时，可显式指定 `--agent`。
 
@@ -57,10 +57,10 @@ npx skills@latest add SSJ-ZYJ/SkillLoom --skill educoder-automation --agent code
 
 用户级安装用于当前用户的多个项目；项目级安装用于指定项目。客户端对加载范围、重复名称及组织策略的处理可能不同，应以目标客户端的文档为准。
 
-| 客户端 | 用户级目录 | 项目级目录 | 官方文档 |
-| --- | --- | --- | --- |
-| Codex | `~/.agents/skills/` | `<项目根目录>/.agents/skills/` | [Codex 技能文档](https://learn.chatgpt.com/docs/build-skills) |
-| Claude Code | `~/.claude/skills/` | `<项目根目录>/.claude/skills/` | [Claude Code 技能文档](https://code.claude.com/docs/en/skills) |
+| 客户端                    | 用户级目录           | 项目级目录                     | 官方文档                                                                                         |
+| ------------------------- | -------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Codex                     | `~/.agents/skills/`  | `<项目根目录>/.agents/skills/` | [Codex 技能文档](https://learn.chatgpt.com/docs/build-skills)                                    |
+| Claude Code               | `~/.claude/skills/`  | `<项目根目录>/.claude/skills/` | [Claude Code 技能文档](https://code.claude.com/docs/en/skills)                                   |
 | GitHub Copilot（VS Code） | `~/.copilot/skills/` | `<项目根目录>/.github/skills/` | [VS Code Agent Skills 文档](https://code.visualstudio.com/docs/agent-customization/agent-skills) |
 
 表中列出各客户端的一组标准路径，未穷举其支持的全部位置。`~` 表示用户主目录；项目根目录指使用技能的目标项目，而非本仓库的下载位置。
@@ -70,8 +70,8 @@ npx skills@latest add SSJ-ZYJ/SkillLoom --skill educoder-automation --agent code
 ## 完整复制技能目录
 
 1. 克隆或下载选定版本的仓库。
-2. 从 [skills.json](../skills.json) 选择技能目录。
-3. 将整个技能目录复制至目标技能根目录，不仅复制 `SKILL.md`。
+2. 从 [skills.json](../skills.json) 选择 `skills/<技能名>/` 下的技能目录。
+3. 将整个技能目录复制至目标技能根目录，不仅复制 `SKILL.md`，也不要把仓库的 `skills/` 容器再套一层复制进去。
 4. 按客户端要求重新加载技能，并核对实际识别的技能名称。
 
 安装后的目录结构应为：
@@ -92,7 +92,7 @@ npx skills@latest add SSJ-ZYJ/SkillLoom --skill educoder-automation --agent code
 
 可在对话中使用“请使用 `<技能名称>` 技能……”指定任务。显式命令由客户端定义，例如 Claude Code 使用 `/技能名称`，Codex 使用 `$技能名称`；其他客户端按自身文档操作。
 
-技能文件可被客户端识别，并不表示该客户端已具备执行任务的全部能力。运行前需核对技能说明中的浏览器访问、页面操作、脚本执行、外部服务与权限要求。当前实验技能的运行条件见[浏览器适配说明](../educoder-automation/references/browser-runtime.md)。
+技能文件可被客户端识别，并不表示该客户端已具备执行任务的全部能力。运行前需核对技能说明中的浏览器访问、页面操作、脚本执行、外部服务与权限要求。当前实验技能的运行条件见[浏览器适配说明](../skills/educoder-automation/references/browser-runtime.md)。
 
 脚本运行环境与依赖以所选技能的说明为准。
 

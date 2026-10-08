@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+
 from skill_catalog import load_catalog, updated_readme
 
 

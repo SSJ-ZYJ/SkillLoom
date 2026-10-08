@@ -1,15 +1,25 @@
 """Shared skill inventory and README rendering. No platform-specific rules."""
 
-from pathlib import Path
 import json
 import re
-
+from pathlib import Path
 
 NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 START = "<!-- skills:start -->"
 END = "<!-- skills:end -->"
-RESERVED = {"scripts", "tests", "docs", "plugins", "dist", "coverage", "node_modules",
-            "venv", "captures", "sessions", "traces"}
+RESERVED = {
+    "scripts",
+    "tests",
+    "docs",
+    "plugins",
+    "dist",
+    "coverage",
+    "node_modules",
+    "venv",
+    "captures",
+    "sessions",
+    "traces",
+}
 
 
 def load_catalog(root: Path) -> list[dict[str, str]]:
@@ -18,7 +28,11 @@ def load_catalog(root: Path) -> list[dict[str, str]]:
         data = json.loads((root / "skills.json").read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
         raise ValueError("skills.json must be readable UTF-8 JSON") from error
-    if not isinstance(data, dict) or type(data.get("schema_version")) is not int or data["schema_version"] != 1:
+    if (
+        not isinstance(data, dict)
+        or type(data.get("schema_version")) is not int
+        or data["schema_version"] != 1
+    ):
         raise ValueError("skills.json requires schema_version 1")
     entries = data.get("skills")
     if not isinstance(entries, list) or not entries:
@@ -27,21 +41,43 @@ def load_catalog(root: Path) -> list[dict[str, str]]:
     for entry in entries:
         if not isinstance(entry, dict):
             raise ValueError("each catalog entry must be an object")
-        name = entry.get("path")
-        if not isinstance(name, str) or not NAME.fullmatch(name) or len(name) > 64 or name in RESERVED:
-            raise ValueError("skill paths must be independent kebab-case root directories")
-        if name in seen:
-            raise ValueError(f"duplicate catalog entry: {name}")
-        seen.add(name)
+        path = entry.get("path")
+        if not isinstance(path, str) or not path.startswith("skills/"):
+            raise ValueError("skill paths must be skills/<kebab-case-name>")
+        name = path.removeprefix("skills/")
+        if not NAME.fullmatch(name) or len(name) > 64 or name in RESERVED:
+            raise ValueError("skill paths must be skills/<kebab-case-name>")
+        if path in seen:
+            raise ValueError(f"duplicate catalog entry: {path}")
+        seen.add(path)
         summary = entry.get("summary")
-        if not isinstance(summary, str) or not summary.strip() or len(summary) > 200 or "\n" in summary or "\r" in summary:
+        if (
+            not isinstance(summary, str)
+            or not summary.strip()
+            or len(summary) > 200
+            or "\n" in summary
+            or "\r" in summary
+        ):
             raise ValueError(f"{name}: summary must be one line of 1-200 characters")
-        directory = root / name
-        if not directory.resolve().is_relative_to(root) or directory.is_symlink():
-            raise ValueError(f"{name}: skill directory must remain inside the repository")
+        directory = root / path
+        if (
+            (root / "skills").is_symlink()
+            or not directory.resolve().is_relative_to(root)
+            or directory.is_symlink()
+        ):
+            raise ValueError(f"{path}: skill directory must remain inside the repository")
         if not (directory / "SKILL.md").is_file():
-            raise ValueError(f"{name}: missing SKILL.md")
-    discovered = {path.parent.name for path in root.glob("*/SKILL.md") if not path.parent.name.startswith(".")}
+            raise ValueError(f"{path}: missing SKILL.md")
+    misplaced = [
+        path.parent.name for path in root.glob("*/SKILL.md") if not path.parent.name.startswith(".")
+    ]
+    if misplaced:
+        raise ValueError("skills must live under skills/: " + ", ".join(sorted(misplaced)))
+    discovered = {
+        path.parent.relative_to(root).as_posix()
+        for path in root.glob("skills/*/SKILL.md")
+        if not path.parent.name.startswith(".")
+    }
     missing = discovered - seen
     if missing:
         raise ValueError("unregistered skills: " + ", ".join(sorted(missing)))
@@ -56,10 +92,12 @@ def escape_cell(value: str) -> str:
 
 
 def render_table(entries: list[dict[str, str]]) -> str:
-    lines = ["| 技能 | 用途 |", "| --- | --- |"]
+    # Keep generated cells stable when the surrounding Markdown is formatted.
+    lines = ["<!-- prettier-ignore -->", "| 技能 | 用途 |", "| --- | --- |"]
     for entry in entries:
-        name = entry["path"]
-        lines.append(f"| [{name}]({name}/SKILL.md) | {escape_cell(entry['summary'])} |")
+        path = entry["path"]
+        name = path.removeprefix("skills/")
+        lines.append(f"| [{name}]({path}/SKILL.md) | {escape_cell(entry['summary'])} |")
     return "\n".join(lines)
 
 

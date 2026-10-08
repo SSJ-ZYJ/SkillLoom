@@ -1,0 +1,23 @@
+{
+  "source": "source/book.pdf",
+  "mode": "markdown",
+  "output": "study-markdown.pdf",
+  "chapters": [
+    {
+      "id": "ch01",
+      "title": "振动基础",
+      "start": 1,
+      "end": 1,
+      "note": "notes/ch01.md",
+      "tex": "latex/chapters/ch01.tex"
+    },
+    {
+      "id": "ch02",
+      "title": "链路时延",
+      "start": 2,
+      "end": 2,
+      "note": "notes/ch02.md",
+      "tex": "latex/chapters/ch02.tex"
+    }
+  ]
+}

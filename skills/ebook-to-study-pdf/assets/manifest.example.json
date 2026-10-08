@@ -1,0 +1,15 @@
+{
+  "source": "source/book.pdf",
+  "mode": "markdown",
+  "output": "总结.pdf",
+  "chapters": [
+    {
+      "id": "ch01",
+      "title": "第一章 示例章节",
+      "start": 1,
+      "end": 2,
+      "note": "notes/ch01.md",
+      "tex": "latex/chapters/ch01.tex"
+    }
+  ]
+}

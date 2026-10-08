@@ -1,11 +1,11 @@
 """Run each registered skill's standard-library Python tests separately."""
 
 import argparse
-from pathlib import Path
 import subprocess
 import sys
-from skill_catalog import load_catalog
+from pathlib import Path
 
+from skill_catalog import load_catalog
 
 RUN_UNITTEST = """import sys, unittest
 suite = unittest.defaultTestLoader.discover('tests', pattern='test_*.py')
@@ -45,8 +45,10 @@ def main() -> int:
                     missing_packages.add(directory.relative_to(skill).as_posix())
                 directory = directory.parent
         if missing_packages:
-            print(f"ERROR: {entry['path']}: nested Python test directories need __init__.py: "
-                  + ", ".join(sorted(missing_packages)))
+            print(
+                f"ERROR: {entry['path']}: nested Python test directories need __init__.py: "
+                + ", ".join(sorted(missing_packages))
+            )
             failed = True
             continue
         tested += 1

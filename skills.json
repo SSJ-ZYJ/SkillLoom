@@ -2,8 +2,12 @@
   "schema_version": 1,
   "skills": [
     {
-      "path": "educoder-automation",
+      "path": "skills/educoder-automation",
       "summary": "在线实验任务自动化，涵盖编程、多文件与选择题，支持保存核验及评测跟踪。"
+    },
+    {
+      "path": "skills/ebook-to-study-pdf",
+      "summary": "电子教材 PDF 到独立学习总结：区分文字与扫描/OCR 来源，核对缺页与题解，生成并视觉验收 LaTeX/PDF。"
     }
   ]
 }

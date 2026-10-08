@@ -1,0 +1,88 @@
+\documentclass[UTF8,zihao=-4,oneside,openany,fontset=none]{ctexbook}
+% Set the title here; the cover contains only this title.
+\newcommand{\BookTitle}{课程名称}
+\usepackage[a4paper,top=2.35cm,bottom=2.35cm,left=2.6cm,right=2.3cm,headheight=15pt,headsep=.55cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{Noto Serif}
+\setsansfont{Noto Sans}
+\setmonofont{Noto Sans Mono}
+\setCJKmainfont{Noto Serif SC}[UprightFeatures={Weight=400},BoldFont={Noto Serif SC},BoldFeatures={Weight=700},ItalicFont={Noto Serif SC},ItalicFeatures={Weight=400},BoldItalicFont={Noto Serif SC},BoldItalicFeatures={Weight=700}]
+\setCJKsansfont{Noto Sans SC}[UprightFeatures={Weight=400},BoldFont={Noto Sans SC},BoldFeatures={Weight=700},ItalicFont={Noto Sans SC},ItalicFeatures={Weight=400},BoldItalicFont={Noto Sans SC},BoldItalicFeatures={Weight=700}]
+\setCJKmonofont{Noto Sans SC}[UprightFeatures={Weight=400},BoldFont={Noto Sans SC},BoldFeatures={Weight=700}]
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{graphicx,xcolor,calc}
+\usepackage{longtable,booktabs,array,tabularx}
+\usepackage{fvextra}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem,etoolbox,fancyhdr}
+\usepackage{hyperref,xurl,bookmark}
+\newcounter{none}
+\definecolor{Ink}{HTML}{0F172A}
+\definecolor{Secondary}{HTML}{405467}
+\definecolor{Canvas}{HTML}{F4F9FC}
+\definecolor{Sky}{HTML}{74BAE5}
+\definecolor{Mint}{HTML}{34C99A}
+\definecolor{Violet}{HTML}{7C6EE6}
+\definecolor{Warning}{HTML}{F59E0B}
+\definecolor{Danger}{HTML}{DC2626}
+\definecolor{Success}{HTML}{16A34A}
+\tcbset{learning/.style={enhanced,breakable,boxrule=.5pt,arc=1.5mm,
+  left=7pt,right=7pt,top=5pt,bottom=5pt,before skip=.65\baselineskip,after skip=.65\baselineskip,
+  fonttitle=\sffamily\bfseries\small,fontupper=\small,coltitle=Ink,colback=Canvas},
+  tone/.style={colframe=#1!42!Canvas,colbacktitle=#1!18!Canvas,
+    borderline west={2.2pt}{0pt}{#1!68!Canvas}}}
+\newtcolorbox{objectivesbox}[1]{learning,tone=Mint,title={#1}}
+\newtcolorbox{definitionbox}[1]{learning,tone=Sky,title={#1}}
+\newtcolorbox{mechanismbox}[1]{learning,tone=Mint,title={#1}}
+\newtcolorbox{formulabox}[1]{learning,tone=Warning,title={#1}}
+\newtcolorbox{examplebox}[1]{learning,tone=Violet,title={#1}}
+\newtcolorbox{problembox}[1]{learning,tone=Sky,title={#1}}
+\newtcolorbox{analysisbox}[1]{learning,tone=Violet,title={#1}}
+\newtcolorbox{answerbox}[1]{learning,tone=Mint,title={#1}}
+\newtcolorbox{pitfallbox}[1]{learning,tone=Danger,title={#1}}
+\newtcolorbox{takeawaybox}[1]{learning,tone=Success,title={#1}}
+\hypersetup{unicode=true,colorlinks=true,linkcolor=Secondary,urlcolor=Secondary,
+  citecolor=Secondary,bookmarksopen=true,pdftitle={\BookTitle}}
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{-1}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{.3em}
+\setlength{\tabcolsep}{4pt}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.15}
+\linespread{1.15}
+\raggedbottom
+\clubpenalty=10000
+\widowpenalty=10000
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\small,breaklines=true,breakanywhere=true}
+\AtBeginEnvironment{longtable}{\small}
+\ctexset{chapter={format=\centering\sffamily\bfseries\zihao{2}\color{Ink},beforeskip=0pt,afterskip=24pt},
+  section={format=\sffamily\bfseries\zihao{3}\color{Secondary},beforeskip=2ex,afterskip=1ex},
+  subsection={format=\sffamily\bfseries\zihao{4}\color{Ink},beforeskip=1.6ex,afterskip=.8ex},
+  subsubsection={format=\sffamily\bfseries\zihao{-4}\color{Ink},beforeskip=1.2ex,afterskip=.6ex}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\BookTitle}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\newsavebox{\pandocbox}
+\providecommand{\pandocbounded}[1]{\sbox{\pandocbox}{#1}\ifdim\wd\pandocbox>\linewidth
+  \resizebox{\linewidth}{!}{\usebox{\pandocbox}}\else\usebox{\pandocbox}\fi}
+\begin{document}
+\frontmatter
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+  \centering
+  \vspace*{.25\textheight}
+  {\zihao{1}\sffamily\bfseries\color{Ink}\BookTitle\par}
+  \vfill
+\end{titlepage}
+\hypersetup{pageanchor=true}
+\tableofcontents
+\mainmatter
+\input{latex/chapters.tex}
+\end{document}

@@ -1,14 +1,19 @@
-from pathlib import Path
 import json
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from validate_repository import sensitive_findings, validate_links, validate_repository, validate_skill
 from skill_catalog import updated_readme
+from validate_repository import (
+    sensitive_findings,
+    validate_links,
+    validate_repository,
+    validate_skill,
+)
 
 
 class RepositoryValidationTests(unittest.TestCase):
@@ -28,12 +33,21 @@ class RepositoryValidationTests(unittest.TestCase):
             self.write(name, "# Fixture\n")
         self.write("LICENSE", "Fixture license\n")
         self.write("VERSION", "0.1.0\n")
-        self.write("demo/LICENSE", "Fixture license\n")
-        self.write("demo/SKILL.md", "---\nname: demo\ndescription: |\n  A scoped fixture skill.\n---\n\n# Demo\n")
-        entries = [{"path": "demo", "summary": "Fixture skill"}]
+        self.write("skills/demo/LICENSE", "Fixture license\n")
+        self.write(
+            "skills/demo/SKILL.md",
+            "---\nname: demo\ndescription: |\n  A scoped fixture skill.\n---\n\n# Demo\n",
+        )
+        entries = [{"path": "skills/demo", "summary": "Fixture skill"}]
         self.write("skills.json", json.dumps({"schema_version": 1, "skills": entries}))
-        self.write("README.md", updated_readme("# Fixture\n\n<!-- skills:start -->\n<!-- skills:end -->\n", entries))
-        self.write(".github/workflows/validate.yml", '"on":\n  push:\npermissions:\n  contents: read\njobs:\n  demo:\n    runs-on: ubuntu-latest\n    steps: []\n')
+        self.write(
+            "README.md",
+            updated_readme("# Fixture\n\n<!-- skills:start -->\n<!-- skills:end -->\n", entries),
+        )
+        self.write(
+            ".github/workflows/validate.yml",
+            '"on":\n  push:\npermissions:\n  contents: read\njobs:\n  demo:\n    runs-on: ubuntu-latest\n    steps: []\n',
+        )
 
     def test_valid_repository_and_multiline_description(self):
         self.make_repository()
@@ -44,8 +58,13 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertIn("skill name must match its directory", validate_skill(path))
 
     def test_boolean_description_is_rejected(self):
-        path = self.write("demo/SKILL.md", "---\nname: demo\ndescription: true\n---\n")
-        self.assertTrue(validate_skill(path))
+        path = self.write(
+            "demo/SKILL.md", "---\nname: demo\ndescription: true\n---\n\nFixture instructions.\n"
+        )
+        self.assertEqual(
+            validate_skill(path),
+            ["description must be a nonempty string of at most 1024 characters"],
+        )
 
     def test_invalid_yaml_is_rejected(self):
         path = self.write("demo/SKILL.md", "---\nname: [broken\ndescription: Fixture\n---\n")
@@ -61,14 +80,19 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertEqual(validate_skill(path), ["SKILL.md must be readable UTF-8 text"])
 
     def test_invalid_compatibility_and_metadata_types_are_rejected(self):
-        path = self.write("demo/SKILL.md", "---\nname: demo\ndescription: Fixture\ncompatibility: true\nmetadata: []\n---\n\nFixture instructions.\n")
+        path = self.write(
+            "demo/SKILL.md",
+            "---\nname: demo\ndescription: Fixture\ncompatibility: true\nmetadata: []\n---\n\nFixture instructions.\n",
+        )
         errors = validate_skill(path)
         self.assertTrue(any("compatibility" in error for error in errors))
         self.assertIn("metadata must be a mapping", errors)
 
     def test_relative_and_encoded_links_resolve(self):
         self.write("references/some file.md", "fixture")
-        path = self.write("README.md", "[ok](references/some%20file.md)\n[web](https://example.org)\n")
+        path = self.write(
+            "README.md", "[ok](references/some%20file.md)\n[web](https://example.org)\n"
+        )
         self.assertEqual(validate_links(path, self.root), [])
 
     def test_missing_link_and_repository_escape_are_rejected(self):
@@ -80,7 +104,10 @@ class RepositoryValidationTests(unittest.TestCase):
     def test_public_link_to_local_maintenance_documentation_is_rejected(self):
         self.write(".local-docs/MAINTENANCE.md", "Fixture local notes\n")
         path = self.write("README.md", "[local](.local-docs/MAINTENANCE.md)\n")
-        self.assertIn("public documents must not link to local maintenance documentation", validate_links(path, self.root))
+        self.assertIn(
+            "public documents must not link to local maintenance documentation",
+            validate_links(path, self.root),
+        )
 
     def test_local_documentation_is_excluded_before_git_initialization(self):
         self.make_repository()
@@ -88,16 +115,30 @@ class RepositoryValidationTests(unittest.TestCase):
         self.assertEqual(validate_repository(self.root), [])
 
     @unittest.skipUnless(shutil.which("git"), "Git is required for publication-scope checks")
-    def test_local_documentation_is_ignored_but_forced_tracked_files_are_rejected(self):
+    def test_ignored_local_files_are_excluded_and_forced_tracked_files_are_rejected(self):
         self.make_repository()
         ignore = (Path(__file__).resolve().parents[1] / ".gitignore").read_text(encoding="utf-8")
         self.write(".gitignore", ignore)
-        self.write(".local-docs/MAINTENANCE.md", "Fixture local notes\n")
+        files = {
+            ".ruff_cache/fixture": "Fixture formatter cache\n",
+            ".local-docs/MAINTENANCE.md": "Fixture local notes\n",
+            ".env": "fixture-local-state",
+            "captures/session.har": "fixture-local-state",
+            ".claude/skills/demo/SKILL.md": "Fixture installed skill\n",
+            ".cursor/skills/demo/SKILL.md": "Fixture installed skill\n",
+            "skills-lock.json": "{}\n",
+        }
+        for name, content in files.items():
+            self.write(name, content)
         subprocess.run(["git", "init", "--quiet"], cwd=self.root, check=True, capture_output=True)
         self.assertEqual(validate_repository(self.root), [])
-        subprocess.run(["git", "add", "--force", ".local-docs/MAINTENANCE.md"],
-                       cwd=self.root, check=True, capture_output=True)
-        self.assertTrue(any(".local-docs" in error and "artifact" in error for error in validate_repository(self.root)))
+        subprocess.run(
+            ["git", "add", "--force", *files], cwd=self.root, check=True, capture_output=True
+        )
+        errors = validate_repository(self.root)
+        for name in files:
+            with self.subTest(file=name):
+                self.assertIn(f"{Path(name)}: local/session artifact must not be published", errors)
 
     def test_links_in_examples_do_not_create_false_failures(self):
         path = self.write("README.md", "```md\n[example](not-a-real-file.md)\n```\n")
@@ -109,7 +150,7 @@ class RepositoryValidationTests(unittest.TestCase):
 
     def test_realistic_literal_credentials_fail_without_printing_their_values(self):
         secret = "fixture-sensitive-value"
-        errors = sensitive_findings(f'?zzud={secret}\n' + json.dumps({"Pc-Authorization": secret}))
+        errors = sensitive_findings(f"?zzud={secret}\n" + json.dumps({"Pc-Authorization": secret}))
         self.assertTrue(errors)
         self.assertNotIn(secret, " ".join(errors))
 
@@ -121,63 +162,34 @@ class RepositoryValidationTests(unittest.TestCase):
 
     def test_standalone_skill_needs_matching_license(self):
         self.make_repository()
-        self.write("demo/LICENSE", "Different fixture license\n")
+        self.write("skills/demo/LICENSE", "Different fixture license\n")
         self.assertTrue(any("license differs" in error for error in validate_repository(self.root)))
 
     def test_privileged_workflow_trigger_is_rejected(self):
         self.make_repository()
-        self.write(".github/workflows/validate.yml", '"on":\n  pull_request_target:\npermissions:\n  contents: read\njobs:\n  demo: {}\n')
+        self.write(
+            ".github/workflows/validate.yml",
+            '"on":\n  pull_request_target:\npermissions:\n  contents: read\njobs:\n  demo: {}\n',
+        )
         self.assertTrue(any("privileged" in error for error in validate_repository(self.root)))
 
     def test_readme_catalog_drift_fails_publication(self):
         self.make_repository()
         path = self.root / "README.md"
-        path.write_text(path.read_text(encoding="utf-8").replace("Fixture skill", "Outdated"), encoding="utf-8")
-        self.assertTrue(any("catalog is out of date" in error for error in validate_repository(self.root)))
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("Fixture skill", "Outdated"), encoding="utf-8"
+        )
+        self.assertTrue(
+            any("catalog is out of date" in error for error in validate_repository(self.root))
+        )
 
     def test_new_skill_without_registration_fails_publication(self):
         self.make_repository()
-        self.write("new-skill/SKILL.md", "---\nname: new-skill\ndescription: Fixture\n---\n")
-        self.write("new-skill/LICENSE", "Fixture license\n")
-        self.assertTrue(any("unregistered skills" in error for error in validate_repository(self.root)))
-
-    @unittest.skipUnless(shutil.which("git"), "Git is required for publication-scope checks")
-    def test_untracked_ignored_session_file_is_not_part_of_publication(self):
-        self.make_repository()
-        self.write(".gitignore", ".env\ncaptures/\n")
-        self.write(".env", "fixture-local-state")
-        self.write("captures/session.har", "fixture-local-state")
-        subprocess.run(["git", "init", "--quiet"], cwd=self.root, check=True, capture_output=True)
-        self.assertEqual(validate_repository(self.root), [])
-
-    @unittest.skipUnless(shutil.which("git"), "Git is required for publication-scope checks")
-    def test_tracked_ignored_session_files_are_still_rejected(self):
-        self.make_repository()
-        self.write(".gitignore", ".env\ncaptures/\n")
-        self.write(".env", "fixture-local-state")
-        self.write("captures/session.har", "fixture-local-state")
-        subprocess.run(["git", "init", "--quiet"], cwd=self.root, check=True, capture_output=True)
-        subprocess.run(["git", "add", "--force", ".env", "captures/session.har"],
-                       cwd=self.root, check=True, capture_output=True)
-        errors = validate_repository(self.root)
-        self.assertTrue(any(".env:" in error and "artifact" in error for error in errors))
-        self.assertTrue(any("session.har:" in error and "artifact" in error for error in errors))
-
-    @unittest.skipUnless(shutil.which("git"), "Git is required for publication-scope checks")
-    def test_local_cli_installations_are_ignored_and_forced_tracked_copies_are_rejected(self):
-        self.make_repository()
-        ignore = (Path(__file__).resolve().parents[1] / ".gitignore").read_text(encoding="utf-8")
-        self.write(".gitignore", ignore)
-        self.write(".claude/skills/demo/SKILL.md", "Fixture installed skill\n")
-        self.write(".cursor/skills/demo/SKILL.md", "Fixture installed skill\n")
-        self.write("skills-lock.json", "{}\n")
-        subprocess.run(["git", "init", "--quiet"], cwd=self.root, check=True, capture_output=True)
-        self.assertEqual(validate_repository(self.root), [])
-        subprocess.run(["git", "add", "--force", ".claude/skills/demo/SKILL.md", "skills-lock.json"],
-                       cwd=self.root, check=True, capture_output=True)
-        errors = validate_repository(self.root)
-        self.assertTrue(any(".claude" in error and "artifact" in error for error in errors))
-        self.assertTrue(any("skills-lock.json" in error and "artifact" in error for error in errors))
+        self.write("skills/new-skill/SKILL.md", "---\nname: new-skill\ndescription: Fixture\n---\n")
+        self.write("skills/new-skill/LICENSE", "Fixture license\n")
+        self.assertTrue(
+            any("unregistered skills" in error for error in validate_repository(self.root))
+        )
 
 
 if __name__ == "__main__":
