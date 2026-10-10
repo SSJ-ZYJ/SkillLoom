@@ -54,7 +54,7 @@ class SkillCatalogTests(unittest.TestCase):
         self.assertEqual(
             [entry["path"] for entry in load_catalog(self.root)], ["skills/first", "skills/second"]
         )
-        self.assertEqual(created, self.root / "skills/second")
+        self.assertEqual(created, (self.root / "skills/second").resolve())
         self.assertFalse((self.root / "second").exists())
         self.assertEqual((created / "LICENSE").read_bytes(), (self.root / "LICENSE").read_bytes())
         self.assertEqual((self.root / "skills/first/SKILL.md").read_bytes(), original)
