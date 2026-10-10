@@ -66,7 +66,7 @@ class BuildDelivery(unittest.TestCase):
         self.manifest.write_text(json.dumps(self.data), encoding="utf-8")
 
     def tool(self, arguments, root, log, timeout):
-        self.assertEqual(root, self.root)
+        self.assertEqual(root, self.root.resolve())
         self.commands.append(arguments)
         log.write_text("Controlled tool log", encoding="utf-8")
         if arguments[0] == self.failure:
@@ -143,6 +143,12 @@ class BuildDelivery(unittest.TestCase):
         self.assertTrue(
             (self.root / "latex/chapters.tex").read_text().startswith(build_study.INDEX_MARKER)
         )
+        self.assertEqual(result["pages"], 1)
+        self.assertNotEqual(self.output.read_bytes(), self.old_pdf)
+
+    def test_noncanonical_manifest_path_builds_in_project_directory(self):
+        self.root = self.root / ".." / self.root.name
+        result = build_study.build(self.root / "manifest.json")
         self.assertEqual(result["pages"], 1)
         self.assertNotEqual(self.output.read_bytes(), self.old_pdf)
 
