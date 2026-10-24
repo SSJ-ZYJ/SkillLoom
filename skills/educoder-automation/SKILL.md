@@ -1,6 +1,6 @@
 ---
 name: educoder-automation
-description: Complete and debug authorized TPI experiments on educoder.net, including coding, multi-file and choice-question levels, with task-specific reading, verified saves and evaluation tracking. Use for experiment completion checks on that platform; other course platforms need their own adapters.
+description: Complete and debug authorized EduCoder (头歌, educoder.net) TPI experiments, including coding, multi-file and choice-question levels, with task-specific reading, verified saves, cooldown-aware scheduling and evaluation tracking. Use for EduCoder homework or experiment completion checks; other course platforms need their own adapters.
 license: MIT
 compatibility: Requires network access, an authenticated browser session with experiment access, and host tools for page interaction, editing, saving and evaluation tracking.
 ---
@@ -114,13 +114,63 @@ result until a confirmed completed pass/fail or a bounded timeout.
   means unresolved evaluation, not failure or permission to submit again.
 - A blank panel, pending response, missing “不匹配”, old “全部通过” text, a
   successful save, or an HTTP 200 response is not evidence of a passed evaluation.
-- Respect the live cooldown/rate limit. Refresh is recovery for a broken page,
-  not a guaranteed way to remove server cooldowns. After recovery reinstall hooks,
-  reconcile file contents and find the existing submission before retrying.
 - Signatures, tokens and timestamps can expire, rotate or bind to method, URL and
   body. Captured pairs are observations, not a portable signing API. Prefer fresh
   app-issued requests; do not assume GET signatures authorize POSTs or a modified
   body, and do not submit extra evaluations merely to harvest credentials.
+
+## Pace submissions from observed server state
+
+The platform may rate-limit submissions server-side. Treat that limit as state to
+measure, never as a constant to hardcode or a page refresh to clear. A refresh
+does not reset a server-side window, and re-submitting inside one is both
+unreliable and abusive.
+
+- Read the current level's own history/build response and derive the wait with
+  `parseCooldownEvidence` (in-page: `runtime.pacingEvidence()`, which returns only
+  a derived summary and keeps bodies and credentials in page memory). A declared
+  wait in the response or `Retry-After` is used as stated. Otherwise measure a
+  cadence from timestamp spacing in the same response.
+- Feed it to `createCooldownTracker`. With no usable evidence the tracker reports
+  `unknown`: read the live app state or let the normal app action reject, then
+  wait and observe again. Do not guess a delay, and never shorten a known wait
+  because a local estimate says it should be ready.
+- Wait with `awaitSubmissionWindow`, which only reads and never submits. A timeout
+  is unresolved, not permission to retry immediately.
+- Never submit the same level twice to discover the interval, and never submit
+  merely to harvest a fresh signature or timestamp.
+
+### Fill the window with the next level
+
+A submission window is wall-clock time you cannot submit in, but it is not idle
+time: reading the next level, composing its solution, saving and reading back are
+not rate-limited. Plan that overlap explicitly with `planCooldownOverlap`, which
+schedules `work` items against `submit` windows on one resource:
+
+```js
+async function planEduCoderWindow(helpers, tasks, nowMs = Date.now()) {
+  return helpers.planCooldownOverlap({ tasks, nowMs, minSubmitGapMs: 0 });
+}
+```
+
+- Model each upcoming level as `work` (`estMs`: a bounded honest estimate for
+  reading, composing, saving and reading back) plus one `submit` whose
+  `earliestStartMs` comes from that level's observed window. Pass `Infinity` when
+  there is no evidence yet: the planner then reports `no_cooldown_evidence`
+  instead of inventing a time.
+- The plan submits the first available level immediately, because every wait then
+  runs while later work is already available, and falls back to `idle` only when
+  no work remains. Inspect `productiveRatio`, `idleMs` and `unscheduled`.
+- Do the planned `work` in the window rather than waiting: prepare and save the
+  next level, then read the file back. Each level still needs its own verified
+  save before its submit is scheduled.
+- After a submit, that level's remaining work needs fresh evidence
+  (`requiresReplan`): re-read its state before scheduling another attempt.
+- Keep one controlled tab and one agent. Preparing a level is not permission to
+  submit it early; the submit still waits for its own observed window.
+
+A missing next-level link means resolve it or report completion as described
+below; it is not an exception to pacing.
 
 After a verified pass, resolve the next-level URL relative to the current page
 and validate its origin/route. A missing next link does not alone prove the whole

@@ -150,7 +150,60 @@ by the overall timer; adapters should honor cancellation to stop the underlying
 operation too. Cooldown and rate-limit handling comes from observed app state,
 not a fixed delay or page refresh.
 
-## 6. Choice input and payload verification
+## 6. Cooldown-aware pacing and window overlap
+
+Read pacing state from the current level's own response, derive the evidence in
+page context, track a window, and plan the wait so it carries real work.
+
+```js
+async function readEduCoderPacing(tab) {
+  return tab.playwright.evaluate(() => {
+    if (!window.__educoderAutomation) throw new Error('runtime_not_installed');
+    return window.__educoderAutomation.pacingEvidence();
+  });
+}
+
+async function trackEduCoderCooldown(tab, tracker) {
+  const snapshot = await readEduCoderPacing(tab);
+  if (!snapshot.evidence) return tracker.state();
+  return tracker.observe(snapshot.evidence);
+}
+
+async function waitEduCoderWindow(helpers, readPacing, tracker, overrides = {}) {
+  const parsed = await readPacing();
+  return helpers.awaitSubmissionWindow(async () => parsed, {
+    ...helpers.DEFAULT_WAIT, tracker, ...overrides,
+  });
+}
+```
+
+`pacingEvidence()` returns a derived summary only: which field shape was seen and
+the measured numbers. Bodies, headers and credentials stay in page memory. A
+missing `evidence` is normal; the tracker then reports `unknown`, and the caller
+must read the live app state instead of assuming a delay.
+
+Plan the overlap so the window is spent on the next level:
+
+```js
+function planEduCoderWindow(helpers, tasks, nowMs) {
+  return helpers.planCooldownOverlap({ tasks, nowMs, minSubmitGapMs: 0, maxIdleMs: 300000 });
+}
+```
+
+Tasks are `{ levelId, kind: 'work', estMs }` and
+`{ levelId, kind: 'submit', earliestStartMs }`. Use `Infinity` for a submit whose
+window has not been observed: the result lists it under `unscheduled` with reason
+`no_cooldown_evidence`, which is the signal to re-read rather than to guess. A
+submit that leaves further work on the same level sets `requiresReplan`.
+
+`selectPacingSource(records, scope)` picks the newest qualifying history record
+from captured `runtime.requests` for the fallback path where in-page extraction is
+unavailable. Do not feed it `snapshot()` output: that intentionally omits bodies.
+`parseCooldownEvidence(source, options)` performs the same normalization in Node
+for that fallback, where `source` is the normalized `{ status, responseText,
+responseComplete, headers }` shape.
+
+## 7. Choice input and payload verification
 
 Locate inputs within each question's own block. Build the wanted state from its
 actual option IDs and the reasoned answer. Check option count and input type,
@@ -163,7 +216,7 @@ does not universally update a React/Ant Design controlled state. If the mapping
 cannot be established, stop to inspect the question metadata instead of toggling
 every global checkbox or submitting a distinctive wrong selection.
 
-## 7. Next-level and file evidence
+## 8. Next-level and file evidence
 
 ```js
 function nextEduCoderLevel(helpers, href, currentPageUrl, platform) {
