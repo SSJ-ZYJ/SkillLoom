@@ -1,4 +1,4 @@
 # Repository checks and skill tests only; end-user dependencies live in each skill.
 PyYAML==6.0.3
-ruff==0.16.10
+ruff==0.17.3
 -r skills/ebook-to-study-pdf/scripts/requirements.txt
