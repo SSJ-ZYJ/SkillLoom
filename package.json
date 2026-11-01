@@ -8,7 +8,7 @@
     "check": "python scripts/check.py"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
+    "@biomejs/biome": "2.6.4",
     "prettier": "3.9.9"
   }
 }
