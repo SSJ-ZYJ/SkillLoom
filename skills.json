@@ -8,6 +8,10 @@
     {
       "path": "skills/ebook-to-study-pdf",
       "summary": "电子教材 PDF 到独立学习总结：区分文字与扫描/OCR 来源，核对缺页与题解，生成并视觉验收 LaTeX/PDF。"
+    },
+    {
+      "path": "skills/repo-conventions",
+      "summary": "仓库规范维护：分层 AGENTS.md、术语对照、门禁阈值与测试注册表，含五份可复制模板。"
     }
   ]
 }

@@ -15,6 +15,7 @@ SkillLoom 是我的 Skills 仓库，整理不同用途的技能及相关资料�
 | --- | --- |
 | [educoder-automation](skills/educoder-automation/SKILL.md) | 在线实验任务自动化，涵盖编程、多文件与选择题，支持保存核验及评测跟踪。 |
 | [ebook-to-study-pdf](skills/ebook-to-study-pdf/SKILL.md) | 电子教材 PDF 到独立学习总结：区分文字与扫描/OCR 来源，核对缺页与题解，生成并视觉验收 LaTeX/PDF。 |
+| [repo-conventions](skills/repo-conventions/SKILL.md) | 仓库规范维护：分层 AGENTS.md、术语对照、门禁阈值与测试注册表，含五份可复制模板。 |
 
 <!-- skills:end -->
 

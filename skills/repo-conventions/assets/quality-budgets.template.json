@@ -1,0 +1,14 @@
+{
+  "limits": {
+    "source": [300, 500],
+    "css": [400, 600],
+    "test": [400, 700],
+    "function": [60, 100]
+  },
+  "exceptions": {
+    "path/to/generated-file.ts": {
+      "ceiling": 560,
+      "reason": "2026-01-01: 生成文件保留为单一来源，上限取当前实际行数。生成结果回到硬限以内时删除本项。"
+    }
+  }
+}
